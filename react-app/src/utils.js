@@ -1,9 +1,10 @@
-export var format = function() {
-	var a;
+export var format = function() 
+{
+	var a = arguments[0];
 	for (var k in arguments) {
 		if(k === 0)
 		{
-			a = arguments[k];
+			continue;
 		}
 		else
 		{

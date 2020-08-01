@@ -75,6 +75,7 @@ class WebSocketClient extends React.Component
 			allowAutoReconnect: true,
 			//sendDataDelegate: props.sendDataDelegate,
 			onReceiveData: props.onReceiveData,
+			onConnectionStatusChanged: props.onConnectionStatusChanged,
 		};
 	}
 	
@@ -185,6 +186,8 @@ class WebSocketClient extends React.Component
 			}
 			*/
 			
+			this.state.onConnectionStatusChanged(true);
+			
 			this.setState({ 
 				ws: webSocket,
 				connectionErrorMsg: null,
@@ -199,12 +202,14 @@ class WebSocketClient extends React.Component
 			});
 			
 			this.closeConnection();
+			this.attemptReconnect();
 		};
 		webSocket.onclose = (event) => {
 			console.warn(utils.format("WebSocket closed ('{0}'):", event.reason), event);
 			
+			this.state.onConnectionStatusChanged(false);
+			
 			this.setState({	ws: null });
-			this.attemptReconnect();
 		};
 
 		webSocket.onmessage = (event) => {
@@ -237,7 +242,7 @@ class WebSocketClient extends React.Component
 				var decoded_str = enc.decode(u8view);
 				console.log("Received from server: '", decoded_str, "'");
 				
-				this.state.onDataReceived(decoded_str);
+				this.state.onReceiveData(decoded_str);
 			});
 			
 			console.log("Awaiting blob to resolve into byte array."); 
@@ -246,13 +251,13 @@ class WebSocketClient extends React.Component
 	
 	closeConnection()
 	{
-		if(this.state.webSocket)
+		if(this.state.ws)
 		{
-			this.state.webSocket.close()
+			this.state.ws.close()
 		}
 	}
 	
-	renderConnectionStatus()
+	render()
 	{
 		var urlForm = (<ConnectURLForm initialPort={this.state.port} onUpdate={(ip, port, useSecureProtocol)=>{
 			var real_ip;
@@ -292,7 +297,7 @@ class WebSocketClient extends React.Component
 		
 		if(this.state.ws == null)
 		{
-			if(errorMsg == null)
+			if(errorMsg === null)
 			{
 				return (
 					<div>
@@ -344,34 +349,8 @@ class WebSocketClient extends React.Component
 		return (
 			<div>
 				<p>App is connected to {this.state.ip}:{this.state.port}. 
-				&nbsp; <a href="/#" onClick={()=>{ this.closeConnection();}}>Disconnect.</a></p>
+				&nbsp; <a href="/#" onClick={()=>{ this.closeConnection(); }}>Disconnect.</a></p>
 			</div>)
-	}
-	
-	render() 
-	{
-		var renderedApp;
-		if(this.state.ws)
-		{
-			renderedApp = (
-			<div>
-				<button onClick={()=>{
-					this.sendData("Here's some text that the server is urgently awaiting!");
-				}}>
-					Ping Server
-				</button>
-			</div>)
-		}
-		else
-		{
-			renderedApp = (<div>App is rendering.</div>);
-		}	
-		return (
-			<div>
-				{renderedApp}
-				{this.renderConnectionStatus()}
-			</div>
-		);
 	}
 }
 

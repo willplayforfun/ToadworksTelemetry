@@ -2,7 +2,6 @@ import React from "react";
 import WebSocketClient from "./WebSocketClient";
 import "./App.css";
 
-
 class App extends React.Component 
 {
 	constructor(props) 
@@ -10,7 +9,9 @@ class App extends React.Component
 		super(props);
 		
 		this.state = {
-			
+			latestReceievedMessage: "",
+			connectionStatus: false,
+			debugSendText: "",
 		};
 	}
 	
@@ -21,6 +22,7 @@ class App extends React.Component
 	onReceive(data_str)
 	{
 		console.log("Consuming: '", data_str, "'");
+		this.setState({latestReceievedMessage: data_str});
 	}
 	
 	sendData(data)
@@ -29,14 +31,56 @@ class App extends React.Component
 		this.refs.socketclient.sendData(data);
 	}
 	
-	render() 
+	
+	handleDebugFormChange(event) 
 	{
+		if(event.target.id === "debugSendText")
+		{
+			this.setState({debugSendText: event.target.value});
+		}
+	}
+	handleDebugFormSubmit(event) 
+	{
+		event.preventDefault();
+		this.sendData(this.state.debugSendText);
+	}
+
+	render() 
+	{		
+		var renderedApp;
+		if(this.state.connectionStatus === true)
+		{
+			renderedApp = (
+			<div>
+				<form onSubmit={this.handleDebugFormSubmit.bind(this)}>
+					<label>
+						Send:&nbsp;<input type="text" id="debugSendText" value={this.state.debugSendText} onChange={this.handleDebugFormChange.bind(this)} />
+					</label>
+				</form>
+				<button onClick={()=>{
+					this.sendData(this.state.debugSendText);
+				}}>
+					Ping Server
+				</button>
+				<p>Latest received message:</p>
+				<div className="code">{this.state.latestReceievedMessage}</div>
+			</div>)
+		}
+		else
+		{
+			renderedApp = (<div>App is rendering.</div>);
+		}
+		
 		return (
 			<div>
+				{renderedApp}
 				<WebSocketClient 
 					initialIp="localhost"
 					initialPort="8889"
 					onReceiveData={(data)=>{this.onReceive(data)}}
+					onConnectionStatusChanged={(status)=>{
+						this.setState({connectionStatus:status});
+					}}
 					ref={'socketclient'}
 				/>
 			</div>
