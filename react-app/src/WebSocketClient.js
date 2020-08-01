@@ -1,5 +1,5 @@
 import React from "react";
-import "./utils";
+import * as utils from "./utils";
 
 var initialPort = "8889";
 
@@ -24,11 +24,11 @@ class ConnectURLForm extends React.Component
 	{
 		console.log("Form change: ", event.target.id, event.target.value);
 		
-		if(event.target.id == "useSecureProtocol")
+		if(event.target.id === "useSecureProtocol")
 		{
 			this.setState({useSecureProtocol: event.target.value});
 		}
-		if(event.target.id == "port")
+		if(event.target.id === "port")
 		{
 			this.setState({port: event.target.value});
 		}
@@ -60,7 +60,7 @@ class ConnectURLForm extends React.Component
 	}
 }
 
-class WebSocketServer extends React.Component 
+class WebSocketClient extends React.Component 
 {
 	constructor(props) 
 	{
@@ -81,7 +81,7 @@ class WebSocketServer extends React.Component
 	// CALLED BY PARENT COMPONENT
 	sendData(data)
 	{
-		if (typeof data == "string")
+		if (typeof data === "string")
 		{
 			if (!("TextEncoder" in window))
 			{
@@ -154,7 +154,7 @@ class WebSocketServer extends React.Component
 	{
 		//check if websocket instance is closed, if so call `connect` function
 		
-		if (!this.state.ws || this.state.ws.readyState == WebSocket.CLOSED)
+		if (!this.state.ws || this.state.ws.readyState === WebSocket.CLOSED)
 		{
 			this.setState({ 
 				connectInterval: null,
@@ -167,7 +167,7 @@ class WebSocketServer extends React.Component
 	openConnection()
 	{
 		var serverUrl = (this.state.useSecureProtocol?"wss":"ws") + "://" + this.state.ip + ":" + this.state.port;
-		console.log("Opening connection to {0}!".format(serverUrl));
+		console.log(utils.format("Opening connection to {0}!", serverUrl));
 		
 		var webSocket = new WebSocket(serverUrl, "binary");
 				
@@ -191,17 +191,17 @@ class WebSocketServer extends React.Component
 			});
 		};
 		webSocket.onerror = (event) => {
-			console.error("WebSocket error ('{0}'):".format(event.reason), event);
+			console.error(utils.format("WebSocket error ('{0}'):", event.reason), event);
 			
 			// TODO: better error messaging
 			this.setState({
-				connectionErrorMsg: "Error with WebSocket ('{0}'). Reconnecting in {1}ms...".format(event.reason, this.state.timeout),
+				connectionErrorMsg: utils.format("Error with WebSocket ('{0}'). Reconnecting in {1}ms...", event.reason, this.state.timeout),
 			});
 			
 			this.closeConnection();
 		};
 		webSocket.onclose = (event) => {
-			console.warn("WebSocket closed ('{0}'):".format(event.reason), event);
+			console.warn(utils.format("WebSocket closed ('{0}'):", event.reason), event);
 			
 			this.setState({	ws: null });
 			this.attemptReconnect();
@@ -256,7 +256,7 @@ class WebSocketServer extends React.Component
 	{
 		var urlForm = (<ConnectURLForm initialPort={this.state.port} onUpdate={(ip, port, useSecureProtocol)=>{
 			var real_ip;
-			if(!onlyWhitespace(ip))
+			if(!utils.onlyWhitespace(ip))
 			{
 				// string is not empty and not just whitespace
 				real_ip = ip;
@@ -268,9 +268,9 @@ class WebSocketServer extends React.Component
 			this.setState({ useSecureProtocol: useSecureProtocol, ip: real_ip, port: port });
 		}} />);
 		
-		var reconnectButton = (<p><a href="#" onClick={()=>{ this.checkConnection();}}>Attempt reconnect now.</a></p>)
+		var reconnectButton = (<p><a href="/#" onClick={()=>{ this.checkConnection();}}>Attempt reconnect now.</a></p>)
 		
-		var stopButton = (<p><a href="#" onClick={()=>{
+		var stopButton = (<p><a href="/#" onClick={()=>{
 			clearTimeout(this.state.connectInterval);
 			this.setState({ allowAutoReconnect: false }); 
 		}}>Prevent auto-reconnect.</a></p>)
@@ -344,7 +344,7 @@ class WebSocketServer extends React.Component
 		return (
 			<div>
 				<p>App is connected to {this.state.ip}:{this.state.port}. 
-				&nbsp; <a href="#" onClick={()=>{ this.closeConnection();}}>Disconnect.</a></p>
+				&nbsp; <a href="/#" onClick={()=>{ this.closeConnection();}}>Disconnect.</a></p>
 			</div>)
 	}
 	
@@ -375,4 +375,4 @@ class WebSocketServer extends React.Component
 	}
 }
 
-export default WebSocketServer;
+export default WebSocketClient;

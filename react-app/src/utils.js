@@ -1,12 +1,21 @@
-String.prototype.format = function() {
-	var a = this;
+export var format = function() {
+	var a;
 	for (var k in arguments) {
-		a = a.replace("{" + k + "}", arguments[k]);
+		if(k === 0)
+		{
+			a = arguments[k];
+		}
+		else
+		{
+			a = a.replace("{" + (k - 1) + "}", arguments[k]);
+		}
 	}
 	return a;
 }
 
-function onlyWhitespace(a)
+export var onlyWhitespace = function (a)
 {
 	return /\S/.test(a);
 }
+
+//export default {onlyWhitespace, format};
